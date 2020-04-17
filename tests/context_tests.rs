@@ -38,6 +38,7 @@ use tss_esapi::tss2_esys::*;
 use tss_esapi::utils::{
     self, algorithm_specifiers::Cipher, AsymSchemeUnion, ObjectAttributes, PublicIdUnion,
     PublicParmsUnion, Signature, Tpm2BPublicBuilder, TpmaSessionBuilder, TpmsRsaParmsBuilder,
+    TpmtSymDefBuilder,
 };
 use tss_esapi::*;
 
@@ -67,15 +68,6 @@ fn create_ctx_without_session() -> Context {
     unsafe { Context::new(Tcti::Mssim).unwrap() }
 }
 
-fn signing_key_pub() -> TPM2B_PUBLIC {
-    utils::create_unrestricted_signing_rsa_public(AsymSchemeUnion::RSASSA(TPM2_ALG_SHA256), 2048, 0)
-        .unwrap()
-}
-
-fn decryption_key_pub() -> TPM2B_PUBLIC {
-    utils::create_restricted_decryption_rsa_public(Cipher::aes_256_cfb(), 2048, 0).unwrap()
-}
-
 #[test]
 fn comprehensive_test() {
     env_logger::init();
@@ -86,7 +78,7 @@ fn comprehensive_test() {
     let prim_key_handle = context
         .create_primary_key(
             ESYS_TR_RH_OWNER,
-            &decryption_key_pub(),
+            &utils::get_rsa_public(true, true, false, 2048),
             &key_auth,
             &[],
             &[],
@@ -116,7 +108,7 @@ fn comprehensive_test() {
     let (key_priv, key_pub) = context
         .create_key(
             prim_key_handle,
-            &signing_key_pub(),
+            &utils::get_rsa_public(false, false, true, 1024),
             &key_auth,
             &[],
             &[],
@@ -209,7 +201,14 @@ mod test_start_sess {
     fn test_bound_sess() {
         let mut context = create_ctx_with_session();
         let prim_key_handle = context
-            .create_primary_key(ESYS_TR_RH_OWNER, &decryption_key_pub(), &[], &[], &[], &[])
+            .create_primary_key(
+                ESYS_TR_RH_OWNER,
+                &utils::get_rsa_public(true, true, false, 2048),
+                &[],
+                &[],
+                &[],
+                &[],
+            )
             .unwrap();
 
         context
@@ -371,7 +370,7 @@ mod test_create_primary {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -388,7 +387,7 @@ mod test_create_primary {
         let _ = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &[0xa5; 100],
                 &[],
                 &[],
@@ -404,7 +403,7 @@ mod test_create_primary {
         let _ = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &[],
                 &[0xa5; 300],
                 &[],
@@ -420,7 +419,7 @@ mod test_create_primary {
         let _ = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &[],
                 &[],
                 &[0xfe; 80],
@@ -436,7 +435,7 @@ mod test_create_primary {
         let _ = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &[],
                 &[],
                 &[],
@@ -457,7 +456,7 @@ mod test_create {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -468,7 +467,7 @@ mod test_create {
         let (_, _) = context
             .create_key(
                 prim_key_handle,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -485,7 +484,7 @@ mod test_create {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -496,7 +495,7 @@ mod test_create {
         assert!(context
             .create_key(
                 prim_key_handle,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &[0xa5; 100],
                 &[],
                 &[],
@@ -513,7 +512,7 @@ mod test_create {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -524,7 +523,7 @@ mod test_create {
         assert!(context
             .create_key(
                 prim_key_handle,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &[],
                 &[0xa5; 300],
                 &[],
@@ -541,7 +540,7 @@ mod test_create {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -552,7 +551,7 @@ mod test_create {
         assert!(context
             .create_key(
                 prim_key_handle,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &[],
                 &[],
                 &[0xfe; 80],
@@ -569,7 +568,7 @@ mod test_create {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -580,7 +579,7 @@ mod test_create {
         assert!(context
             .create_key(
                 prim_key_handle,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &[],
                 &[],
                 &[],
@@ -601,7 +600,7 @@ mod test_load {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -612,7 +611,7 @@ mod test_load {
         let (private, public) = context
             .create_key(
                 prim_key_handle,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -635,7 +634,7 @@ mod test_sign {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -665,7 +664,7 @@ mod test_sign {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -695,7 +694,7 @@ mod test_sign {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -729,7 +728,7 @@ mod test_verify_sig {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -763,7 +762,7 @@ mod test_verify_sig {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -798,7 +797,7 @@ mod test_verify_sig {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -823,7 +822,7 @@ mod test_verify_sig {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -845,8 +844,12 @@ mod test_load_ext {
     use super::*;
 
     pub fn get_ext_rsa_pub() -> TPM2B_PUBLIC {
+        let symmetric = TpmtSymDefBuilder::aes_256_cfb_object();
         let scheme = AsymSchemeUnion::RSASSA(TPM2_ALG_SHA256);
-        let rsa_parms = TpmsRsaParmsBuilder::new_unrestricted_signing_key(scheme, 2048, 0)
+        let rsa_parms = TpmsRsaParmsBuilder::new()
+            .with_symmetric(symmetric)
+            .with_key_bits(2048)
+            .with_scheme(scheme)
             .build()
             .unwrap(); // should not fail as we control the params
         let mut object_attributes = ObjectAttributes(0);
@@ -893,7 +896,7 @@ mod test_read_pub {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -915,7 +918,7 @@ mod test_flush_context {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -934,7 +937,7 @@ mod test_flush_context {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -945,7 +948,7 @@ mod test_flush_context {
         let (private, public) = context
             .create_key(
                 prim_key_handle,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -970,7 +973,7 @@ mod test_ctx_save {
         let key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -988,7 +991,7 @@ mod test_ctx_save {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -999,7 +1002,7 @@ mod test_ctx_save {
         let (private, public) = context
             .create_key(
                 prim_key_handle,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -1024,7 +1027,7 @@ mod test_ctx_load {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &decryption_key_pub(),
+                &utils::get_rsa_public(true, true, false, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -1035,7 +1038,7 @@ mod test_ctx_load {
         let (private, public) = context
             .create_key(
                 prim_key_handle,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -1062,7 +1065,7 @@ mod test_handle_auth {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
@@ -1098,7 +1101,7 @@ mod test_handle_auth {
         let prim_key_handle = context
             .create_primary_key(
                 ESYS_TR_RH_OWNER,
-                &signing_key_pub(),
+                &utils::get_rsa_public(false, false, true, 2048),
                 &key_auth,
                 &[],
                 &[],
