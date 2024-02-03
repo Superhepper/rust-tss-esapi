@@ -17,11 +17,15 @@ if [[ ! -z ${USE_FROZEN_LOCKFILE:+x} ]]; then
 	cp tests/Cargo.lock.frozen ../Cargo.lock
 fi
 
+find / -name "*libjson*"
+
+ldd swtpm_setup
+
 ############################
 # Run the TPM SWTPM server #
 ############################
 mkdir /tmp/tpmdir
-swtpm_setup --tpm2 \
+LD_PRELOAD=/usr/lib64/libjson-glib-1.0.so.0 swtpm_setup --tpm2 \
     --tpmstate /tmp/tpmdir \
     --createek --decryption --create-ek-cert \
     --create-platform-cert \
