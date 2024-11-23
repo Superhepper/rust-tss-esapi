@@ -19,6 +19,11 @@ pkg-config = "0.3.18"
 target-lexicon = "0.12.0"
 cfg-if = "1.0.0"
 semver = "1.0.7"
+autotools = { version = "0.2.6", optional = true }
+
+[target.'cfg(windows)'.build-dependencies]
+msbuild = { git = "https://github.com/uglyoldbob/msbuild", optional = true }
 
 [features]
 generate-bindings = ["bindgen"]
+bundled = ["dep:autotools", "dep:msbuild"]
