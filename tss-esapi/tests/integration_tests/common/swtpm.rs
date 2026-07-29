@@ -6,13 +6,12 @@
 //! Each test gets its own `SwtpmSession` which spawns a dedicated swtpm process
 //! communicating over a Unix domain socket in a temporary directory. The session
 //! is cleaned up automatically on drop.
-
-use assert_fs::TempDir;
 use socket2::{Domain, SockAddr, Socket, Type};
 use std::ops::{Deref, DerefMut};
 use std::path::PathBuf;
 use std::process::{Child, Stdio};
 use std::time::Duration;
+use tempfile::TempDir;
 use tss_esapi::{
     Context, attributes::SessionAttributesBuilder, constants::SessionType,
     interface_types::algorithm::HashingAlgorithm, structures::SymmetricDefinition,
